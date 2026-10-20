@@ -1,0 +1,41 @@
+
+name: Build Jellyfin 12.2 plugin
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Jellyfin.Plugin.IntroDBOnlineWriter/**'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish plugin
+        run: |
+          dotnet publish Jellyfin.Plugin.IntroDBOnlineWriter/Jellyfin.Plugin.IntroDBOnlineWriter.csproj \
+            --configuration Release \
+            --output ./dist
+
+      - name: Package plugin
+        run: |
+          mkdir -p ./package/IntroDBOnlineWriter_0.1.0
+          cp ./dist/Jellyfin.Plugin.IntroDBOnlineWriter.dll ./package/IntroDBOnlineWriter_0.1.0/
+          cd package
+          zip -r ../IntroDBOnlineWriter_0.1.0.zip IntroDBOnlineWriter_0.1.0
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IntroDBOnlineWriter-jf12.2
+          path: IntroDBOnlineWriter_0.1.0.zip
